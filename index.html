@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Digital Focus | Force-Compression Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #ff5e00; --bg: #050505; --card: #111114; --border: #27272a; --text: #ffffff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; }
+
+        .app-container { width: 100%; max-width: 1000px; display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+        @media (max-width: 850px) { .app-container { grid-template-columns: 1fr; } }
+
+        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 25px; position: relative; }
+        
+        /* Drag & Drop Highlight */
+        #dropZone.dragover { border-color: var(--primary); background: rgba(255, 94, 0, 0.05); }
+
+        /* Preview System */
+        .preview-container { 
+            position: relative; width: 100%; height: 400px; background: #000; 
+            border-radius: 12px; overflow: hidden; margin-top: 15px; border: 1px solid var(--border);
+            cursor: crosshair;
+        }
+        .preview-img { 
+            position: absolute; width: 100%; height: 100%; object-fit: contain; 
+            transition: transform 0.1s ease-out; transform-origin: center; pointer-events: none;
+        }
+        .after-view { clip-path: inset(0 0 0 50%); }
+        .slider-bar { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: var(--primary); z-index: 10; pointer-events: none; }
+        
+        /* Controls */
+        .sidebar { display: flex; flex-direction: column; gap: 15px; }
+        .input-group { margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid transparent; transition: 0.3s; }
+        .input-group:focus-within { border-color: var(--primary); }
+        label { display: block; font-size: 10px; font-weight: 800; color: #71717a; text-transform: uppercase; margin-bottom: 5px; }
+        input, select { width: 100%; background: transparent; border: none; color: #fff; font-weight: 700; outline: none; }
+        
+        .btn-main { background: var(--primary); color: #fff; border: none; padding: 20px; border-radius: 15px; font-weight: 800; cursor: pointer; transition: 0.3s; width: 100%; text-transform: uppercase; }
+        .btn-main:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-2px); }
+        .btn-main:disabled { background: #27272a; cursor: not-allowed; opacity: 0.6; }
+
+        #fileList { margin-top: 15px; max-height: 200px; overflow-y: auto; font-size: 12px; }
+        .file-item { padding: 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .file-item b { color: var(--primary); }
+
+        .privacy-note { font-size: 11px; color: #52525b; margin-top: 20px; text-align: center; line-height: 1.4; }
+        footer { margin-top: 40px; color: #71717a; font-size: 12px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="panel">
+        <h2 style="margin-bottom: 10px; letter-spacing: -1px;">AI DIGITAL FOCUS | <span style="color:var(--primary)">FORCE-PRO</span></h2>
+        
+        <div id="dropZone" style="border: 2px dashed var(--border); padding: 40px 20px; text-align: center; border-radius: 15px; cursor: pointer; transition: 0.3s;">
+            <p id="statusText" style="font-weight: 600;">Drag images here or click to browse</p>
+            <input type="file" id="fileInput" multiple accept="image/*" hidden>
+        </div>
+
+        <div class="preview-container" id="previewContainer">
+            <img id="imgBefore" class="preview-img" src="">
+            <img id="imgAfter" class="preview-img after-view" src="">
+            <div class="slider-bar" id="sliderBar"></div>
+            <div style="position:absolute; top:10px; left:10px; font-size:9px; background:rgba(0,0,0,0.8); padding:4px 8px; border-radius:4px; border: 1px solid var(--border)">ORIGINAL</div>
+            <div style="position:absolute; top:10px; right:10px; font-size:9px; background:rgba(255,94,0,0.2); padding:4px 8px; border-radius:4px; border: 1px solid var(--primary); color:var(--primary)">COMPRESSED</div>
+        </div>
+        <p style="font-size: 10px; color: #71717a; margin-top: 12px; text-align: center;">Scroll to Zoom • Slide to Compare • Private Local Processing</p>
+        
+        <div id="fileList"></div>
+    </div>
+
+    <div class="sidebar">
+        <div class="panel">
+            <div class="input-group">
+                <label>Target Maximum (KB)</label>
+                <input type="number" id="targetSize" value="150" min="10">
+            </div>
+            <div class="input-group">
+                <label>Starting Max Width (PX)</label>
+                <input type="number" id="maxWidth" value="1920" min="100">
+            </div>
+            <div class="input-group">
+                <label>Output Format</label>
+                <select id="outputFormat">
+                    <option value="image/jpeg">JPEG (High Compatibility)</option>
+                    <option value="image/webp">WebP (Best Compression)</option>
+                </select>
+            </div>
+            <button class="btn-main" id="startBtn" onclick="startBatch()">Crush Assets</button>
+            
+            <div class="privacy-note">
+                <strong>Privacy Policy:</strong> Your images are processed entirely in your browser. No data is ever uploaded to a server. 100% Secure.
+            </div>
+        </div>
+        <p style="text-align:center; font-weight:800; font-size:14px; color:var(--primary); letter-spacing: 1px;">AI DIGITAL FOCUS</p>
+    </div>
+</div>
+
+<footer>&copy; 2024 AI DIGITAL FOCUS. All Rights Reserved.</footer>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const previewContainer = document.getElementById('previewContainer');
+    const imgBefore = document.getElementById('imgBefore');
+    const imgAfter = document.getElementById('imgAfter');
+    const sliderBar = document.getElementById('sliderBar');
+    const startBtn = document.getElementById('startBtn');
+    let zoomLevel = 1;
+
+    // --- Drag and Drop Logic ---
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+
+    dropZone.ondragover = () => dropZone.classList.add('dragover');
+    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+    dropZone.ondrop = (e) => {
+        dropZone.classList.remove('dragover');
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect();
+    };
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = handleFileSelect;
+
+    function handleFileSelect() {
+        const count = fileInput.files.length;
+        document.getElementById('statusText').innerText = count > 0 ? `${count} image(s) ready for crushing.` : "Click to add images";
+        if(fileInput.files[0]) {
+            if (imgBefore.src) URL.revokeObjectURL(imgBefore.src);
+            imgBefore.src = URL.createObjectURL(fileInput.files[0]);
+        }
+    }
+
+    // --- Zoom & Slider ---
+    previewContainer.onwheel = (e) => {
+        e.preventDefault();
+        zoomLevel += e.deltaY * -0.001;
+        zoomLevel = Math.min(Math.max(1, zoomLevel), 5);
+        imgBefore.style.transform = `scale(${zoomLevel})`;
+        imgAfter.style.transform = `scale(${zoomLevel})`;
+    };
+
+    previewContainer.onmousemove = (e) => {
+        const rect = previewContainer.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        sliderBar.style.left = x + '%';
+        imgAfter.style.clipPath = `inset(0 0 0 ${x}%)`;
+    };
+
+    // --- Core Processing ---
+    async function startBatch() {
+        const files = fileInput.files;
+        if (!files.length) return alert("Please select images first!");
+        
+        startBtn.disabled = true;
+        startBtn.innerText = "Crushing...";
+
+        const targetKB = parseFloat(document.getElementById('targetSize').value);
+        let startWidth = parseFloat(document.getElementById('maxWidth').value);
+        const format = document.getElementById('outputFormat').value;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            try {
+                const blob = await forceCompress(file, targetKB, startWidth, format);
+                
+                const blobURL = URL.createObjectURL(blob);
+                if (i === 0) imgAfter.src = blobURL;
+                
+                // Automatic Download
+                const ext = format === 'image/webp' ? 'webp' : 'jpg';
+                const link = document.createElement('a');
+                link.href = blobURL;
+                link.download = `ADF_Compressed_${file.name.split('.')[0]}.${ext}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Cleanup URL memory after a short delay to ensure download starts
+                setTimeout(() => URL.revokeObjectURL(blobURL), 1000);
+
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `<span>${file.name}</span> <span>→ <b>${(blob.size/1024).toFixed(1)} KB</b></span>`;
+                document.getElementById('fileList').prepend(item);
+            } catch (err) {
+                console.error("Compression failed", err);
+            }
+        }
+        
+        startBtn.disabled = false;
+        startBtn.innerText = "Crush Assets";
+    }
+
+    async function forceCompress(file, targetKB, maxW, format) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            const sourceURL = URL.createObjectURL(file);
+            img.src = sourceURL;
+            
+            img.onload = async () => {
+                let currentWidth = Math.min(img.width, maxW);
+                let finalBlob;
+                let attempts = 0;
+
+                while (attempts < 7) {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    let scale = currentWidth / img.width;
+                    canvas.width = currentWidth;
+                    canvas.height = img.height * scale;
+                    
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // Binary search for optimal quality
+                    let min = 0.01, max = 0.98, quality = 0.8;
+                    for (let j = 0; j < 7; j++) {
+                        quality = (min + max) / 2;
+                        finalBlob = await new Promise(r => canvas.toBlob(r, format, quality));
+                        if (finalBlob.size / 1024 > targetKB) max = quality;
+                        else min = quality;
+                    }
+
+                    // If still too big, reduce resolution by 30% and try again
+                    if (finalBlob.size / 1024 > targetKB && attempts < 6) {
+                        currentWidth *= 0.7;
+                        attempts++;
+                    } else {
+                        break;
+                    }
+                }
+                URL.revokeObjectURL(sourceURL);
+                resolve(finalBlob);
+            };
+        });
+    }
+</script>
+</body>
+</html>
+</html>
+
